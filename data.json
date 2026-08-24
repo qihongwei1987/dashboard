@@ -1,0 +1,8 @@
+{
+  "pdd": { "name": "拼多多", "orders": 752, "amount": 20367.73 },
+  "taobao": { "name": "淘宝", "orders": 303, "amount": 7746.45 },
+  "douyin": { "name": "抖店", "orders": 55, "amount": 1405.30 },
+  "xhs": { "name": "小红书", "orders": 2, "amount": 63.90 },
+  "jd": { "name": "京东", "orders": 25, "amount": 476.00 },
+  "baseDate": "2026-08-24"
+}
