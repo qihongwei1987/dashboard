@@ -2,10 +2,10 @@
   "pdd": {
     "base_orders": 783,
     "base_amount": 21533.52,
-    "realtime_orders": 27,
-    "realtime_amount": 502.29,
-    "orders": 810,
-    "amount": 22035.81,
+    "realtime_orders": 35,
+    "realtime_amount": 1181.29,
+    "orders": 818,
+    "amount": 22714.81,
     "name": "拼多多"
   },
   "taobao": {
