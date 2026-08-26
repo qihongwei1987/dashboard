@@ -1,17 +1,17 @@
 {
   "pdd": {
-    "orders": 752,
-    "amount": 20501.31,
+    "orders": 783,
+    "amount": 21533.52,
     "name": "拼多多"
   },
   "taobao": {
-    "orders": 305,
-    "amount": 7809.95,
+    "orders": 318,
+    "amount": 8194.85,
     "name": "淘宝"
   },
   "douyin": {
-    "orders": 58,
-    "amount": 1589.3,
+    "orders": 63,
+    "amount": 1692.8,
     "name": "抖店"
   },
   "xhs": {
@@ -19,5 +19,5 @@
     "amount": 63.9,
     "name": "小红书"
   },
-  "baseDate": "2026-08-25"
+  "baseDate": "2026-08-26"
 }
