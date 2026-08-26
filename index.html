@@ -166,13 +166,16 @@
     <h1>实时数据</h1>
     <div class="subtitle" id="updateTime"></div>
   </div>
-  <button class="refresh-btn" id="refreshBtn" onclick="doRefresh()">
-    <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="23 4 23 10 17 10"></polyline>
-      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-    </svg>
-    刷新
-  </button>
+  <div style="display:flex; align-items:center;">
+    <button class="refresh-btn" id="refreshBtn" onclick="doRefresh()">
+      <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+      刷新
+    </button>
+    <span id="statusMsg" style="font-size:12px; color:#ff6d41; margin-left:10px; min-width:80px;"></span>
+  </div>
 </div>
 <div class="grid" id="grid"></div>
 <script>
