@@ -2,10 +2,10 @@
   "pdd": {
     "base_orders": 783,
     "base_amount": 21533.52,
-    "realtime_orders": 4,
-    "realtime_amount": 99.0,
-    "orders": 787,
-    "amount": 21632.52,
+    "realtime_orders": 23,
+    "realtime_amount": 430.29,
+    "orders": 806,
+    "amount": 21963.81,
     "name": "拼多多"
   },
   "taobao": {
@@ -20,10 +20,10 @@
   "douyin": {
     "base_orders": 63,
     "base_amount": 1692.8,
-    "realtime_orders": 0,
-    "realtime_amount": 0.0,
-    "orders": 63,
-    "amount": 1692.8,
+    "realtime_orders": 4,
+    "realtime_amount": 99.0,
+    "orders": 67,
+    "amount": 1791.8,
     "name": "抖店"
   },
   "xhs": {
