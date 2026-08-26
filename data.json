@@ -1,8 +1,23 @@
 {
-  "pdd": { "name": "拼多多", "orders": 752, "amount": 20367.73 },
-  "taobao": { "name": "淘宝", "orders": 303, "amount": 7746.45 },
-  "douyin": { "name": "抖店", "orders": 55, "amount": 1405.30 },
-  "xhs": { "name": "小红书", "orders": 2, "amount": 63.90 },
-  "jd": { "name": "京东", "orders": 25, "amount": 476.00 },
-  "baseDate": "2026-08-24"
+  "pdd": {
+    "orders": 752,
+    "amount": 20501.31,
+    "name": "拼多多"
+  },
+  "taobao": {
+    "orders": 305,
+    "amount": 7809.95,
+    "name": "淘宝"
+  },
+  "douyin": {
+    "orders": 58,
+    "amount": 1589.3,
+    "name": "抖店"
+  },
+  "xhs": {
+    "orders": 2,
+    "amount": 63.9,
+    "name": "小红书"
+  },
+  "baseDate": "2026-08-25"
 }
