@@ -173,6 +173,7 @@
     </svg>
     刷新
   </button>
+  <span id="statusMsg" style="font-size:12px; color:#ff6d41; margin-left:10px; min-width:80px;"></span>
 </div>
 <div class="grid" id="grid"></div>
 <script>
@@ -266,60 +267,109 @@ function animateNumber(elementId, from, to, type) {
   requestAnimationFrame(step);
 }
 
-// ============ API 配置（按需修改） ============
-// 本地调试：留空，使用相对路径
-// Tunnel/公网部署：填入完整地址，如 'https://abc123.trycloudflare.com?token=your_secret'
-const API_BASE = '';  // 例: 'https://abc123.trycloudflare.com'
-const API_TOKEN = 'jushuitan2026';  // 与 app.py 中的 API_SECRET 一致
-// ==============================================
+// ============ 本地触发服务配置 ============
+const LOCAL_SERVER = 'http://localhost:8765';
+const SERVER_SECRET = 'jst2026';
+const POLL_INTERVAL = 5000;
+const MAX_POLL = 120;
+// =========================================
 
-function getApiUrl(path) {
-  if (API_BASE) {
-    return API_BASE + path + (API_TOKEN ? '?token=' + API_TOKEN : '');
-  }
-  return path;
+function triggerLocalFetch() {
+  return fetch(`${LOCAL_SERVER}/api/refresh?token=${SERVER_SECRET}`)
+    .then(resp => resp.json());
+}
+
+function pollFetchStatus() {
+  return fetch(`${LOCAL_SERVER}/api/status`)
+    .then(resp => resp.json());
+}
+
+function loadData() {
+  return fetch(`https://raw.githubusercontent.com/qihongwei1987/dashboard/master/index.html?t=${Date.now()}`)
+    .then(resp => resp.text())
+    .then(html => {
+      const match = html.match(/const STORES = \[.*?\];/s);
+      if (match) {
+        try {
+          const fn = new Function('PDD_LOGO','TAOBAO_LOGO','DOUYIN_LOGO','XHS_LOGO','JD_LOGO',
+            match[0] + ' return STORES;');
+          const stores = fn(PDD_LOGO, TAOBAO_LOGO, DOUYIN_LOGO, XHS_LOGO, JD_LOGO);
+          stores.forEach((s, i) => { STORES[i].orders = s.orders; STORES[i].amount = s.amount; });
+          return true;
+        } catch(e) { console.error('parse STORES error', e); return false; }
+      }
+      return false;
+    });
 }
 
 function doRefresh() {
   const btn = document.getElementById('refreshBtn');
+  const msg = document.getElementById('statusMsg');
   btn.classList.add('spinning');
-  btn.textContent = '抓取中...';
-  
-  fetch(getApiUrl('/api/fetch'))
-    .then(response => response.json())
+  btn.textContent = '触发中...';
+  msg.textContent = '';
+
+  fetch(`${LOCAL_SERVER}/health`, { mode: 'cors' })
+    .then(resp => {
+      if (!resp.ok) throw new Error('服务未响应');
+      return triggerLocalFetch();
+    })
     .then(result => {
-      if (result.error) {
-        alert('抓取失败: ' + result.error);
-        btn.classList.remove('spinning');
-        btn.innerHTML = '<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 刷新';
-        return;
-      }
-      
-      const remoteData = result.data;
-      const storeMap = { 'pdd': 0, 'taobao': 1, 'douyin': 2, 'xhs': 3, 'jd': 4 };
-      
-      STORES.forEach((store, i) => {
-        const key = Object.keys(storeMap).find(k => storeMap[k] === i);
-        if (key && remoteData[key]) {
-          store.orders = remoteData[key].orders;
-          store.amount = remoteData[key].amount;
-        }
-      });
-      
-      STORES.forEach((store, i) => {
-        animateNumber('orders-' + i, 0, store.orders, 'orders');
-        animateNumber('amount-' + i, 0, store.amount, 'amount');
-      });
-      updateTime();
-      btn.classList.remove('spinning');
-      btn.innerHTML = '<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 刷新';
+      if (result.error) throw new Error(result.error);
+      btn.textContent = '抓取中...';
+      msg.textContent = '抓取中...';
+      return pollCompletion(btn, msg);
     })
     .catch(err => {
-      console.error('Fetch error:', err);
       btn.classList.remove('spinning');
       btn.innerHTML = '<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 刷新';
-      alert('数据抓取中...\n请稍后刷新页面查看最新数据。');
+      msg.textContent = '';
+      alert('触发失败: ' + err.message + '\n\n请确保本地服务正在运行（双击 start_refresh_server.bat）');
     });
+}
+
+function pollCompletion(btn, msg) {
+  return new Promise((resolve, reject) => {
+    let count = 0;
+    function poll() {
+      count++;
+      if (count > MAX_POLL) {
+        btn.classList.remove('spinning');
+        btn.innerHTML = '<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 刷新';
+        msg.textContent = '超时，请手动刷新页面';
+        reject(new Error('轮询超时'));
+        return;
+      }
+      pollFetchStatus().then(status => {
+        if (!status.is_fetching && status.last_result === 'success') {
+          msg.textContent = '加载数据...';
+          loadData().then(ok => {
+            if (ok) {
+              STORES.forEach((store, i) => {
+                animateNumber('orders-' + i, 0, store.orders, 'orders');
+                animateNumber('amount-' + i, 0, store.amount, 'amount');
+              });
+              updateTime();
+              msg.textContent = '✓ 已更新';
+            } else {
+              msg.textContent = '加载失败，请刷新页面';
+            }
+            btn.classList.remove('spinning');
+            btn.innerHTML = '<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 刷新';
+            resolve();
+          });
+        } else if (!status.is_fetching && status.last_result) {
+          msg.textContent = '抓取失败: ' + status.last_result;
+          btn.classList.remove('spinning');
+          btn.innerHTML = '<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 刷新';
+          reject(new Error('抓取失败'));
+        } else {
+          setTimeout(poll, POLL_INTERVAL);
+        }
+      }).catch(() => setTimeout(poll, POLL_INTERVAL));
+    }
+    poll();
+  });
 }
 
 renderCards();
