@@ -1,29 +1,29 @@
 {
   "pdd": {
-    "base_orders": 783,
-    "base_amount": 21533.52,
-    "realtime_orders": 35,
-    "realtime_amount": 1181.29,
-    "orders": 818,
-    "amount": 22714.81,
+    "base_orders": 815,
+    "base_amount": 22420.08,
+    "realtime_orders": 0,
+    "realtime_amount": 0.0,
+    "orders": 815,
+    "amount": 22420.08,
     "name": "拼多多"
   },
   "taobao": {
-    "base_orders": 318,
-    "base_amount": 8194.85,
-    "realtime_orders": 11,
-    "realtime_amount": 366.4,
-    "orders": 329,
-    "amount": 8561.25,
+    "base_orders": 326,
+    "base_amount": 8405.88,
+    "realtime_orders": 0,
+    "realtime_amount": 0.0,
+    "orders": 326,
+    "amount": 8405.88,
     "name": "淘宝"
   },
   "douyin": {
-    "base_orders": 63,
-    "base_amount": 1692.8,
-    "realtime_orders": 4,
-    "realtime_amount": 99.0,
-    "orders": 67,
-    "amount": 1791.8,
+    "base_orders": 64,
+    "base_amount": 1724.3,
+    "realtime_orders": 0,
+    "realtime_amount": 0.0,
+    "orders": 64,
+    "amount": 1724.3,
     "name": "抖店"
   },
   "xhs": {
@@ -35,5 +35,5 @@
     "amount": 63.9,
     "name": "小红书"
   },
-  "baseDate": "2026-08-26"
+  "baseDate": "2026-08-27"
 }
