@@ -269,61 +269,30 @@ function animateNumber(elementId, from, to, type) {
   requestAnimationFrame(step);
 }
 
-// ============ 远程触发配置（方案 B：CORS 代理 + GitHub Actions） ============
-const GH_OWNER = 'qihongwei1987';
-const GH_REPO = 'dashboard';
-// Token 分段存储，防止被 GitHub 安全扫描拦截
-const _t1 = 'ghp_FXTqWFpbui';
-const _t2 = 'eTGsVxgcTURhjMQkUKiL2KAKPh';
-const GH_PAT = _t1 + _t2; 
+// ============ 本地触发服务配置 ============
+const LOCAL_SERVER = 'http://localhost:8765';
+const SERVER_SECRET = 'jst2026';
+const POLL_INTERVAL = 5000;   // 轮询间隔 5 秒
+const MAX_POLL = 120;          // 最多轮询 120 次（约 10 分钟）
+// =========================================
 
-const CORS_PROXY = 'https://api.allorigins.win/raw?url='; // 备用 CORS 代理
-const POLL_INTERVAL = 8000;   // 轮询间隔 8 秒
-const MAX_POLL = 60;          // 最多轮询 60 次（约 8 分钟）
-// =======================================================================
-
-function apiFetch(url, options) {
-  return fetch(CORS_PROXY + encodeURIComponent(url), options).then(resp => {
-    if (!resp.ok) {
-      return resp.text().then(body => { throw new Error(`${resp.status}: ${body.substring(0,100)}`); });
-    }
-    return resp;
-  });
+// 调用本地服务触发抓取
+function triggerLocalFetch() {
+  return fetch(`${LOCAL_SERVER}/api/refresh?token=${SERVER_SECRET}`)
+    .then(resp => resp.json());
 }
 
-function triggerWorkflow() {
-  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/actions/workflows/trigger-scraper.yml/dispatches`;
-  return apiFetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${GH_PAT}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ ref: 'master' })
-  });
+// 轮询抓取状态
+function pollFetchStatus() {
+  return fetch(`${LOCAL_SERVER}/api/status`)
+    .then(resp => resp.json());
 }
 
-function checkTriggerStatus() {
-  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/trigger.json?ref=master&t=${Date.now()}`;
-  return apiFetch(url, { headers: { 'Authorization': `Bearer ${GH_PAT}` } })
-    .then(resp => {
-      if (!resp.ok) return { status: 'waiting' };
-      return resp.json();
-    })
-    .then(data => {
-      if (!data.content) return { status: 'waiting' };
-      const content = JSON.parse(atob(data.content));
-      return { status: content.status || 'waiting' };
-    });
-}
-
+// 加载最新数据（从 GitHub raw）
 function loadData() {
-  const url = `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/index.html?ref=master&t=${Date.now()}`;
-  return apiFetch(url, { headers: { 'Authorization': `Bearer ${GH_PAT}` } })
-    .then(resp => resp.json())
-    .then(data => {
-      const html = atob(data.content);
+  return fetch(`https://raw.githubusercontent.com/qihongwei1987/dashboard/master/index.html?t=${Date.now()}`)
+    .then(resp => resp.text())
+    .then(html => {
       const match = html.match(/const STORES = \[.*?\];/s);
       if (match) {
         try {
@@ -345,17 +314,23 @@ function doRefresh() {
   btn.textContent = '触发中...';
   msg.textContent = '';
 
-  triggerWorkflow()
+  // 先检查本地服务是否运行
+  fetch(`${LOCAL_SERVER}/health`, { mode: 'cors' })
     .then(resp => {
-      if (!resp.ok) throw new Error('触发失败 (' + resp.status + ')');
+      if (!resp.ok) throw new Error('服务未响应');
+      return triggerLocalFetch();
+    })
+    .then(result => {
+      if (result.error) throw new Error(result.error);
       btn.textContent = '抓取中...';
+      msg.textContent = '抓取中...';
       return pollCompletion(btn, msg);
     })
     .catch(err => {
       btn.classList.remove('spinning');
       btn.innerHTML = '<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 刷新';
       msg.textContent = '';
-      alert('刷新失败: ' + err.message);
+      alert('触发失败: ' + err.message + '\n\n请确保本地服务正在运行（双击 start_refresh_server.bat）');
     });
 }
 
@@ -367,40 +342,47 @@ function pollCompletion(btn, msg) {
       if (count > MAX_POLL) {
         btn.classList.remove('spinning');
         btn.innerHTML = '<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 刷新';
-        msg.textContent = '';
-        reject(new Error('超时，请检查本地脚本是否运行'));
+        msg.textContent = '超时，请手动刷新页面';
+        reject(new Error('轮询超时'));
         return;
       }
-      msg.textContent = `抓取中... (${count * 8}s)`;
-      checkTriggerStatus().then(r => {
-        if (r.status === 'completed') {
-          msg.textContent = '更新中...';
+
+      pollFetchStatus().then(status => {
+        if (!status.is_fetching && status.last_result === 'success') {
+          // 抓取完成，加载最新数据
+          msg.textContent = '加载数据...';
           loadData().then(ok => {
             if (ok) {
-              STORES.forEach((s, i) => {
-                animateNumber('orders-' + i, 0, s.orders, 'orders');
-                animateNumber('amount-' + i, 0, s.amount, 'amount');
+              STORES.forEach((store, i) => {
+                animateNumber('orders-' + i, 0, store.orders, 'orders');
+                animateNumber('amount-' + i, 0, store.amount, 'amount');
               });
               updateTime();
             }
             btn.classList.remove('spinning');
             btn.innerHTML = '<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 刷新';
-            msg.textContent = '✅ 已更新';
+            msg.textContent = '已更新 ✓';
             setTimeout(() => { msg.textContent = ''; }, 3000);
             resolve();
           });
-        } else if (r.status === 'failed') {
+          return;
+        }
+        
+        if (status.last_result && status.last_result !== 'success' && !status.is_fetching) {
           btn.classList.remove('spinning');
           btn.innerHTML = '<svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg> 刷新';
-          msg.textContent = '';
-          reject(new Error('抓取失败'));
-        } else {
-          setTimeout(poll, POLL_INTERVAL);
+          msg.textContent = '抓取失败: ' + status.last_result;
+          reject(new Error(status.last_result));
+          return;
         }
+
+        msg.textContent = `抓取中... (${count * POLL_INTERVAL / 1000}s)`;
+        setTimeout(poll, POLL_INTERVAL);
       }).catch(() => setTimeout(poll, POLL_INTERVAL));
     }
-    setTimeout(poll, POLL_INTERVAL);
+    poll();
   });
+}
 }
 
 renderCards();
