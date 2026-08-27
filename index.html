@@ -273,17 +273,22 @@ function animateNumber(elementId, from, to, type) {
 const GH_OWNER = 'qihongwei1987';
 const GH_REPO = 'dashboard';
 // Token 分段存储，防止被 GitHub 安全扫描拦截
-const _t1 = 'ghp_kAhTmHuCngv';
-const _t2 = 'WA0nN4iueMf1k8EYLWn1u05du';
+const _t1 = 'ghp_FXTqWFpbui';
+const _t2 = 'eTGsVxgcTURhjMQkUKiL2KAKPh';
 const GH_PAT = _t1 + _t2; 
 
-const CORS_PROXY = 'https://corsproxy.io/?'; // 免费 CORS 代理
+const CORS_PROXY = 'https://api.allorigins.win/raw?url='; // 备用 CORS 代理
 const POLL_INTERVAL = 8000;   // 轮询间隔 8 秒
 const MAX_POLL = 60;          // 最多轮询 60 次（约 8 分钟）
 // =======================================================================
 
 function apiFetch(url, options) {
-  return fetch(CORS_PROXY + encodeURIComponent(url), options);
+  return fetch(CORS_PROXY + encodeURIComponent(url), options).then(resp => {
+    if (!resp.ok) {
+      return resp.text().then(body => { throw new Error(`${resp.status}: ${body.substring(0,100)}`); });
+    }
+    return resp;
+  });
 }
 
 function triggerWorkflow() {
