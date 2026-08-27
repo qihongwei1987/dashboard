@@ -11,10 +11,10 @@
   "taobao": {
     "base_orders": 326,
     "base_amount": 8405.88,
-    "realtime_orders": 11,
-    "realtime_amount": 148.57,
-    "orders": 337,
-    "amount": 8554.45,
+    "realtime_orders": 14,
+    "realtime_amount": 148.6,
+    "orders": 340,
+    "amount": 8554.48,
     "name": "淘宝"
   },
   "douyin": {
