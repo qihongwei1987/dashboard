@@ -269,7 +269,7 @@ function animateNumber(elementId, from, to, type) {
 // ============ 本地触发服务配置 ============
 const LOCAL_SERVER = 'http://localhost:8765';
 const SERVER_SECRET = 'jst2026';
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 2000; // 提速：每 2 秒检查一次
 const MAX_POLL = 120;
 // =========================================
 
@@ -372,7 +372,115 @@ function pollCompletion(btn, msg) {
   });
 }
 
+// ★ 自动轮询：定时抓取完成后自动更新页面（绕过 GitHub CDN）
+function startAutoPoll() {
+  let lastDataSnapshot = null;
+  
+  function checkForUpdates() {
+    fetch(`${LOCAL_SERVER}/api/data`)
+      .then(resp => resp.json())
+      .then(result => {
+        if (result.error || !result.data) return;
+        const data = result.data;
+        const storeKeys = ['pdd', 'taobao', 'douyin', 'xhs'];
+        
+        // 构建当前数据快照用于比较
+        const currentSnapshot = storeKeys.map(key => {
+          if (!data[key]) return '';
+          return `${data[key].orders}-${data[key].amount}`;
+        }).join('|');
+        
+        // 首次加载或数据无变化，跳过
+        if (!lastDataSnapshot) {
+          lastDataSnapshot = currentSnapshot;
+          return;
+        }
+        if (currentSnapshot === lastDataSnapshot) return;
+        
+        // 数据有变化！更新页面
+        lastDataSnapshot = currentSnapshot;
+        storeKeys.forEach((key, i) => {
+          if (data[key] && STORES[i]) {
+            STORES[i].orders = data[key].orders;
+            STORES[i].amount = data[key].amount;
+          }
+        });
+        STORES.forEach((store, i) => {
+          animateNumber('orders-' + i, 0, store.orders, 'orders');
+          animateNumber('amount-' + i, 0, store.amount, 'amount');
+        });
+        updateTime();
+        
+        // 显示自动更新提示
+        const msg = document.getElementById('statusMsg');
+        if (msg) {
+          msg.textContent = '✓ 已自动更新';
+          setTimeout(() => { msg.textContent = ''; }, 5000);
+        }
+      })
+      .catch(() => {}); // 静默失败，不影响用户体验
+  }
+  
+  // 每 30 秒检查一次
+  setInterval(checkForUpdates, 30000);
+}
+
+// ★ 自动轮询：定时抓取完成后自动更新页面（绕过 GitHub CDN）
+function startAutoPoll() {
+  let lastDataSnapshot = null;
+  
+  function checkForUpdates() {
+    fetch(`${LOCAL_SERVER}/api/data`)
+      .then(resp => resp.json())
+      .then(result => {
+        if (result.error || !result.data) return;
+        const data = result.data;
+        const storeKeys = ['pdd', 'taobao', 'douyin', 'xhs'];
+        
+        // 构建当前数据快照用于比较
+        const currentSnapshot = storeKeys.map(key => {
+          if (!data[key]) return '';
+          return `${data[key].orders}-${data[key].amount}`;
+        }).join('|');
+        
+        // 首次加载或数据无变化，跳过
+        if (!lastDataSnapshot) {
+          lastDataSnapshot = currentSnapshot;
+          return;
+        }
+        if (currentSnapshot === lastDataSnapshot) return;
+        
+        // 数据有变化！更新页面
+        lastDataSnapshot = currentSnapshot;
+        storeKeys.forEach((key, i) => {
+          if (data[key] && STORES[i]) {
+            STORES[i].orders = data[key].orders;
+            STORES[i].amount = data[key].amount;
+          }
+        });
+        STORES.forEach((store, i) => {
+          animateNumber('orders-' + i, 0, store.orders, 'orders');
+          animateNumber('amount-' + i, 0, store.amount, 'amount');
+        });
+        updateTime();
+        
+        // 显示自动更新提示
+        const msg = document.getElementById('statusMsg');
+        if (msg) {
+          msg.textContent = '✓ 已自动更新';
+          setTimeout(() => { msg.textContent = ''; }, 5000);
+        }
+      })
+      .catch(() => {}); // 静默失败，不影响用户体验
+  }
+  
+  // 每 30 秒检查一次
+  setInterval(checkForUpdates, 30000);
+}
+
 renderCards();
+startAutoPoll();
+startAutoPoll();
 </script>
 </body>
 </html>
