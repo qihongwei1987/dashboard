@@ -2,28 +2,28 @@
   "pdd": {
     "base_orders": 839,
     "base_amount": 23117.06,
-    "realtime_orders": 0,
-    "realtime_amount": 0.0,
-    "orders": 839,
-    "amount": 23117.06,
+    "realtime_orders": 28,
+    "realtime_amount": 676.98,
+    "orders": 867,
+    "amount": 23794.04,
     "name": "拼多多"
   },
   "taobao": {
     "base_orders": 336,
     "base_amount": 8466.45,
-    "realtime_orders": 0,
-    "realtime_amount": 0.0,
-    "orders": 336,
-    "amount": 8466.45,
+    "realtime_orders": 1,
+    "realtime_amount": 17.5,
+    "orders": 337,
+    "amount": 8483.95,
     "name": "淘宝"
   },
   "douyin": {
     "base_orders": 68,
     "base_amount": 1787.1,
-    "realtime_orders": 0,
-    "realtime_amount": 0.0,
-    "orders": 68,
-    "amount": 1787.1,
+    "realtime_orders": 3,
+    "realtime_amount": 54.0,
+    "orders": 71,
+    "amount": 1841.1,
     "name": "抖店"
   },
   "xhs": {
